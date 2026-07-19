@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Runtime artifacts
+outputs/
+.vibeskills/
+.tmp/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Private bundles
+bundled/
+
+# Evidence directories
+uat-evidence-*/
+execution-evidence-*/
+
+# Local config overrides
+*.local.json
+*.local.md
+
+# Credentials
+*.pem
+*.key
+.env
