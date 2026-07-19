@@ -5,8 +5,8 @@ Vibe 是一个治理化的 AI 工作流运行时，支持 Claude Code 和 Codex 
 ## 核心特性
 
 - **六阶段治理运行时**：skeleton_check → deep_interview → requirement_doc → xl_plan → plan_execute → phase_cleanup
-- **Python 优先路由器**（v2.1+）：默认使用 Python 路由器，无需 PowerShell 依赖（macOS/Linux 友好）
-- **PowerShell 兼容回退**：通过环境变量 `VIBE_USE_POWERSHELL=1` 可选启用 PowerShell 路由器（Windows 兼容）
+- **specialist 推荐路由器 Python 优先**（v2.1+）：`router_bridge.py`（负责推荐专家技能）默认走 Python，无需 PowerShell；通过 `VIBE_USE_POWERSHELL=1` 可选回退到 PowerShell
+- **六阶段治理主运行时仍需 PowerShell**：`canonical_entry.py` 调用的 `invoke-vibe-runtime.ps1` 及其模块目前仍依赖 `pwsh`（macOS 需先安装 PowerShell 7）。完整迁移到 Python 尚未完成
 - **specialist 技能路由**：自动推荐和调度专家技能
 - **证明文件生成**：需求文档、执行计划、验证报告、清理收据
 - **边界返回控制**：在关键阶段返回用户决策
@@ -14,6 +14,9 @@ Vibe 是一个治理化的 AI 工作流运行时，支持 Claude Code 和 Codex 
 ## 快速开始
 
 ### macOS/Linux
+
+> **前置依赖**：六阶段治理运行时需要 PowerShell 7 (`pwsh`)。macOS 可用 `brew install --cask powershell` 安装。
+> 未安装 `pwsh` 时，`/vibe` 六阶段主流程会直接报错 `PowerShell executable not found`（specialist 推荐路由器不受影响，可独立以 Python 运行）。
 
 ```bash
 git clone https://github.com/kzj123vip/vibe-skill.git
@@ -33,12 +36,19 @@ cd vibe-skill
 
 ## 路由器架构（v2.1+）
 
-### Python 优先策略
+> **重要范围说明**：本节的"Python 优先"**仅适用于 specialist 推荐路由器**（`router_bridge.py`，负责推荐专家技能）。
+> **六阶段治理主运行时**（`canonical_entry.py` → `invoke-vibe-runtime.ps1`，即你运行 `/vibe` 时的实际流程）**仍然强依赖 PowerShell 7 (`pwsh`)**。
+> macOS/Linux 用户运行完整治理流程时**必须安装 `pwsh`**，否则主入口会报 `PowerShell executable not found`。
+> 完整移除 PowerShell 依赖需要迁移全部 `.ps1` 运行时模块，属于尚未完成的大型工作。
 
-从 v2.1.0 开始，Vibe 默认使用 **Python 路由器**，消除了 macOS/Linux 用户对 PowerShell 的依赖：
+### Python 优先策略（仅 specialist 推荐路由器）（仅限 specialist 推荐路由器）
+
+> **范围说明**：本节仅针对 `router_bridge.py`——负责"推荐哪个专家技能"的辅助路由器。六阶段治理主运行时（`canonical_entry.py` → `invoke-vibe-runtime.ps1`）仍依赖 PowerShell，见下方"已知限制"。
+
+从 v2.1.0 开始，specialist 推荐路由器默认使用 **Python**，该辅助功能不再需要 PowerShell：
 
 ```bash
-# 默认：使用 Python 路由器（无需 PowerShell）
+# 默认：specialist 推荐路由器使用 Python（无需 PowerShell）
 python3 -m vgo_runtime.router_bridge \
   --prompt "你的任务描述" \
   --grade M \
@@ -70,9 +80,10 @@ VIBE_USE_POWERSHELL=1 python3 -m vgo_runtime.router_bridge \
 ### 路由优化（本次更新）
 
 #### v2.1.0 改进
-- ✅ **Python 优先**：消除 macOS 用户对 PowerShell 的依赖
-- ✅ **环境变量控制**：`VIBE_USE_POWERSHELL=1` 可选启用 PowerShell
+- ✅ **specialist 推荐路由器 Python 优先**：`router_bridge.py` 默认走 Python，该辅助模块不再需要 PowerShell
+- ✅ **环境变量控制**：`VIBE_USE_POWERSHELL=1` 可对该路由器可选启用 PowerShell
 - ✅ **向后兼容**：PowerShell 路由器保留为兼容回退
+- ⚠️ **未完成**：六阶段治理主运行时仍依赖 `pwsh`，macOS/Linux 完整流程仍需安装 PowerShell 7
 
 #### 历史问题修复
 - 缓存审计任务错误推荐 iOS/代码接收类 specialist
