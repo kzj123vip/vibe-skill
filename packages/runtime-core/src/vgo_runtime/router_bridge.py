@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -72,11 +73,23 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
-    shell = None if args.force_runtime_neutral else resolve_powershell_host()
+
+    # 新策略：Python 优先，PowerShell 仅作兼容回退
+    # 触发 PowerShell 回退的条件：
+    # 1. 设置环境变量 VIBE_USE_POWERSHELL=1（显式要求）
+    # 2. 或 --force-powershell 命令行参数（待实现）
+    use_powershell = (
+        not args.force_runtime_neutral
+        and os.environ.get('VIBE_USE_POWERSHELL', '').strip() in ('1', 'true', 'True', 'TRUE')
+    )
+
+    shell = resolve_powershell_host() if use_powershell else None
 
     if shell:
+        # PowerShell 回退路径（仅当显式请求时）
         payload = invoke_canonical_router(args, shell)
     else:
+        # 默认路径：使用 Python 路由器（macOS/Linux 友好）
         payload = route_prompt(
             prompt=args.prompt,
             grade=args.grade,
